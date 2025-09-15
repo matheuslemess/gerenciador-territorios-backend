@@ -1,9 +1,9 @@
 services:
   - type: web
-    name: genterritorios-ap
+    name: gerenciador-territorios-api
     runtime: node
     plan: free
-    buildPacks:
+    buildpacks:
       - url: https://github.com/jontewks/puppeteer-heroku-buildpack
     buildCommand: "npm install"
     startCommand: "npm start"
