@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: genterritorios-ap
+    runtime: node
+    plan: free
+    buildPacks:
+      - url: https://github.com/jontewks/puppeteer-heroku-buildpack
+    buildCommand: "npm install"
+    startCommand: "npm start"
+    healthCheckPath: /
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
+        value: true
