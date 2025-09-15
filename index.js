@@ -1,4 +1,6 @@
 // 1. Importação dos pacotes que vamos usar
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
@@ -14,9 +16,21 @@ const path = require('path');
 
 // 3. Configuração dos Middlewares
 // Habilita o CORS para que nosso frontend possa acessar o backend
+const allowedOrigins = [
+  'http://localhost:5173', // front local
+  'https://genterritorios.vercel.app' // front em produção
+];
+
 app.use(cors({
-  origin: 'https://genterritorios.vercel.app' 
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
 }));
+
 // Habilita o Express para entender requisições com corpo em formato JSON
 app.use(express.json());
 
@@ -24,12 +38,13 @@ app.use('/uploads', express.static('uploads'));
 
 // 4. Configuração da Conexão com o Banco de Dados (PostgreSQL)
 // **IMPORTANTE: Substitua com suas próprias credenciais!**
+const isProduction = process.env.NODE_ENV === 'production';
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
+  connectionString: process.env.DATABASE_URL || "postgres://usuario:senha@localhost:5432/nomedobanco",
+  ssl: isProduction ? { rejectUnauthorized: false } : false
 });
+
 
 // Teste de conexão com o banco de dados
 pool.query('SELECT NOW()', (err, res) => {
@@ -250,14 +265,17 @@ app.get('/territorios', async (req, res) => {
 // Rota para CRIAR um novo território com upload de imagem (POST)
 app.post('/territorios', upload.single('imagem'), async (req, res) => {
   try {
-    console.log('Conteúdo do req.body:', req.body);
     const { numero, descricao, tipo, observacoes } = req.body;
 
-    // O Multer nos dá acesso ao arquivo via 'req.file'
-    if (!req.file) {
-      return res.status(400).json({ error: 'A imagem do mapa é obrigatória.' });
+    // ALTERAÇÃO 1: Adicionamos a validação para os campos obrigatórios
+    if (!numero || !descricao) {
+      return res.status(400).json({ error: 'Número e Descrição do Território são obrigatórios.' });
     }
-    const url_imagem = req.file.location;  // Caminho do arquivo salvo
+
+    // ALTERAÇÃO 2: A imagem agora é opcional.
+    // Se req.file existir, usamos sua localização (URL no S3).
+    // Se não, salvamos null no banco de dados.
+    const url_imagem = req.file ? req.file.location : null;
 
     const novoTerritorioQuery = `
       INSERT INTO territorios (numero, descricao, url_imagem, tipo, observacoes)
