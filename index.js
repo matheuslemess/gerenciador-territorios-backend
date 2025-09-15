@@ -571,7 +571,18 @@ app.get('/territorios/export/pdf', async (req, res) => {
     `;
 
     // 5. Geramos o PDF com Puppeteer (lógica existente)
-    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+
+const browser = await puppeteer.launch({
+  headless: true, // Garante que está no modo headless, sem interface gráfica
+  args: [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage', // Essencial em ambientes de container
+    '--disable-accelerated-2d-canvas',
+    '--disable-gpu', // Desativa a aceleração de hardware (não necessária para gerar PDF)
+    '--window-size=1920x1080', // Define um tamanho de janela padrão
+  ]
+});
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
     const pdfBuffer = await page.pdf({ format: 'A4', landscape: true, printBackground: true, margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' } });
