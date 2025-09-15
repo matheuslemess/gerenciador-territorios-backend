@@ -1,12 +1,9 @@
 services:
   - type: web
     name: gerenciador-territorios-api
-    runtime: node
+    runtime: docker
     plan: free
-    buildpacks:
-      - url: https://github.com/jontewks/puppeteer-heroku-buildpack
-    buildCommand: "npm install"
-    startCommand: "npm start"
+    dockerfilePath: ./Dockerfile
     healthCheckPath: /
     envVars:
       - key: DATABASE_URL
@@ -15,5 +12,3 @@ services:
         sync: false
       - key: AWS_SECRET_ACCESS_KEY
         sync: false
-      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
-        value: true
