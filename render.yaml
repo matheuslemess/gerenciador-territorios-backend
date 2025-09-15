@@ -1,9 +1,10 @@
 services:
   - type: web
     name: gerenciador-territorios-api
-    runtime: docker
+    runtime: node
     plan: free
-    dockerfilePath: ./Dockerfile
+    buildCommand: "npm install"
+    startCommand: "npm start"
     healthCheckPath: /
     envVars:
       - key: DATABASE_URL

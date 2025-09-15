@@ -2,7 +2,7 @@
   "name": "gerenciador-territorios-backend",
   "version": "1.0.0",
   "main": "index.js",
-   "scripts": {
+  "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
     "dev": "nodemon index.js"
@@ -17,8 +17,7 @@
     "express": "^5.1.0",
     "multer": "^2.0.2",
     "multer-s3": "^3.0.1",
-    "pg": "^8.16.3",
-    "puppeteer": "^24.19.0"
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
