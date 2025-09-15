@@ -6,14 +6,18 @@ const puppeteer = require('puppeteer');
 
 // 2. Inicialização do Express
 const app = express();
-const port = 3001; // Usaremos a porta 3001 para o backend
+const port = process.env.PORT || 3001;
 
+const { S3Client } = require('@aws-sdk/client-s3');
 const multer = require('multer');
+const multerS3 = require('multer-s3');
 const path = require('path');
 
 // 3. Configuração dos Middlewares
 // Habilita o CORS para que nosso frontend possa acessar o backend
-app.use(cors());
+app.use(cors({
+  origin: 'https://genterritorios.vercel.app' 
+}));
 // Habilita o Express para entender requisições com corpo em formato JSON
 app.use(express.json());
 
@@ -38,18 +42,31 @@ pool.query('SELECT NOW()', (err, res) => {
 });
 
 // Configuração do Multer para upload de imagens
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/'); // Garanta que a pasta 'uploads' exista na raiz do projeto
-  },
-  filename: function (req, file, cb) {
-    // Cria um nome de arquivo único para evitar conflitos
-    cb(null, 'mapa-' + Date.now() + path.extname(file.originalname));
+// Configura o cliente S3 para se conectar à AWS
+// As credenciais serão lidas das variáveis de ambiente que configuraremos no Render
+const s3 = new S3Client({
+  region: 'us-east-2', // <-- MUDE AQUI para a região do seu bucket S3
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   }
 });
 
-const upload = multer({ storage: storage });
-
+// Nova configuração do Multer para fazer upload direto para o S3
+const upload = multer({
+  storage: multerS3({
+    s3: s3,
+    bucket: 'gerenciador-territorios-mapas', // <-- MUDE AQUI para o nome do seu bucket
+    metadata: function (req, file, cb) {
+      cb(null, {fieldName: file.fieldname});
+    },
+    key: function (req, file, cb) {
+      // Cria um nome de arquivo único para a imagem no S3
+      cb(null, 'mapas/mapa-' + Date.now() + path.extname(file.originalname));
+    },
+    acl: 'public-read' // Define o arquivo como publicamente legível
+  })
+});
 // 5. Definição da Primeira Rota (Rota de Teste)
 app.get('/', (req, res) => {
   res.json({ message: 'API do Gerenciador de Territórios está no ar!' });
@@ -241,7 +258,7 @@ app.post('/territorios', upload.single('imagem'), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: 'A imagem do mapa é obrigatória.' });
     }
-    const url_imagem = req.file.path; // Caminho do arquivo salvo
+    const url_imagem = req.file.location;  // Caminho do arquivo salvo
 
     const novoTerritorioQuery = `
       INSERT INTO territorios (numero, descricao, url_imagem, tipo, observacoes)
