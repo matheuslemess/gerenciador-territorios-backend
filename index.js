@@ -877,6 +877,9 @@ app.delete('/campanhas/:id', async (req, res) => {
 });
 
 // 6. Iniciando o Servidor
-app.listen(port, () => {
-  console.log(`Servidor backend rodando em http://localhost:${port}`);
+const HOST = '0.0.0.0';
+
+app.listen(port, HOST, () => {
+  // A mensagem de log foi ajustada para não confundir mais com "localhost"
+  console.log(`Servidor backend rodando em http://${HOST}:${port}`); 
 });
